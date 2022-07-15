@@ -8,7 +8,7 @@ def parse_kgat_args():
                         help='Random seed.')
 
     parser.add_argument('--data_name', nargs='?', default='amazon-book',
-                        help='Choose a dataset from {yelp2018, last-fm, amazon-book}')
+                        help='Choose a dataset from {yelp2018, last-fm, amazon-book, music}')
     parser.add_argument('--data_dir', nargs='?', default='datasets/',
                         help='Input data path.')
 
