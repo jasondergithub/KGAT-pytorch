@@ -18,23 +18,23 @@ class DataLoaderBase(object):
         self.pretrain_embedding_dir = args.pretrain_embedding_dir
 
         self.data_dir = os.path.join(args.data_dir, args.data_name)
-        # self.train_file = os.path.join(self.data_dir, 'train.txt')
-        # self.test_file = os.path.join(self.data_dir, 'test.txt')
+        self.train_file = os.path.join(self.data_dir, 'train.txt')
+        self.test_file = os.path.join(self.data_dir, 'test.txt')
         self.kg_file = os.path.join(self.data_dir, "kg_final.txt")
 
-        self.n_users = 0
-        self.n_items = 0
+        # self.n_users = 0
+        # self.n_items = 0
 
-        self.train_user_set = defaultdict(list)
-        self.test_user_set = defaultdict(list)
+        # self.train_user_set = defaultdict(list)
+        # self.test_user_set = defaultdict(list)
         
-        # self.cf_train_data, self.train_user_dict = self.load_cf(self.train_file)
-        # self.cf_test_data, self.test_user_dict = self.load_cf(self.test_file)
-        # self.statistic_cf()
+        self.cf_train_data, self.train_user_dict = self.load_cf(self.train_file)
+        self.cf_test_data, self.test_user_dict = self.load_cf(self.test_file)
+        self.statistic_cf()
 
-        self.cf_train_data, self.cf_test_data = self.load_data()
-        self.train_user_dict = self.train_user_set
-        self.test_user_dict = self.test_user_set 
+        # self.cf_train_data, self.cf_test_data = self.load_data()
+        # self.train_user_dict = self.train_user_set
+        # self.test_user_dict = self.test_user_set 
 
         if self.use_pretrain == 1:
             self.load_pretrained_data()
@@ -63,60 +63,60 @@ class DataLoaderBase(object):
         item = np.array(item, dtype=np.int32)
         return (user, item), user_dict
 
-    def read_cf_new(self):
-        # reading rating file
-        rating_file = 'data/' + args.dataset + '/ratings_final'
-        if os.path.exists(rating_file + '.npy'):
-            rating_np = np.load(rating_file + '.npy')
-        else:
-            rating_np = np.loadtxt(rating_file + '.txt', dtype=np.int64)
-            np.save(rating_file + '.npy', rating_np)      
+    # def read_cf_new(self):
+    #     # reading rating file
+    #     rating_file = 'data/' + args.dataset + '/ratings_final'
+    #     if os.path.exists(rating_file + '.npy'):
+    #         rating_np = np.load(rating_file + '.npy')
+    #     else:
+    #         rating_np = np.loadtxt(rating_file + '.txt', dtype=np.int64)
+    #         np.save(rating_file + '.npy', rating_np)      
         
-        test_ratio = 0.2
-        n_ratings = rating_np.shape[0]
-        eval_indices = np.random.choice(n_ratings, size=int(n_ratings * test_ratio), replace=False)
-        left = set(range(n_ratings)) - set(eval_indices)
-        train_indices = list(left) 
+    #     test_ratio = 0.2
+    #     n_ratings = rating_np.shape[0]
+    #     eval_indices = np.random.choice(n_ratings, size=int(n_ratings * test_ratio), replace=False)
+    #     left = set(range(n_ratings)) - set(eval_indices)
+    #     train_indices = list(left) 
 
-        train_data = rating_np[train_indices]
-        eval_data = rating_np[eval_indices]
-        train_rating = rating_np[train_indices]
-        ui_adj = self.generate_ui_adj(rating_np, train_rating)
-        return train_data, eval_data, ui_adj               
+    #     train_data = rating_np[train_indices]
+    #     eval_data = rating_np[eval_indices]
+    #     train_rating = rating_np[train_indices]
+    #     ui_adj = self.generate_ui_adj(rating_np, train_rating)
+    #     return train_data, eval_data, ui_adj               
 
-    def generate_ui_adj(self, rating, train_rating):
-        self.n_user, self.n_item = len(set(rating[:, 0])), len(set(rating[:, 1]))
-        ui_adj_orign = sp.coo_matrix(
-            (train_rating[:, 2], (train_rating[:, 0], train_rating[:, 1])), shape=(self.n_user, self.n_item)).todok()
+    # def generate_ui_adj(self, rating, train_rating):
+    #     self.n_user, self.n_item = len(set(rating[:, 0])), len(set(rating[:, 1]))
+    #     ui_adj_orign = sp.coo_matrix(
+    #         (train_rating[:, 2], (train_rating[:, 0], train_rating[:, 1])), shape=(self.n_user, self.n_item)).todok()
 
-        ui_adj = sp.bmat([[None, ui_adj_orign],
-                        [ui_adj_orign.T, None]], dtype=np.float32)
-        ui_adj = ui_adj.todok()
-        print('already create user-item adjacency matrix', ui_adj.shape)
-        return ui_adj
+    #     ui_adj = sp.bmat([[None, ui_adj_orign],
+    #                     [ui_adj_orign.T, None]], dtype=np.float32)
+    #     ui_adj = ui_adj.todok()
+    #     print('already create user-item adjacency matrix', ui_adj.shape)
+    #     return ui_adj
 
-    def remap_item(self, train_data, eval_data):
-        # global n_users, n_items
-        self.n_users = max(max(train_data[:, 0]), max(eval_data[:, 0])) + 1
-        self.n_items = max(max(train_data[:, 1]), max(eval_data[:, 1])) + 1
+    # def remap_item(self, train_data, eval_data):
+    #     # global n_users, n_items
+    #     self.n_users = max(max(train_data[:, 0]), max(eval_data[:, 0])) + 1
+    #     self.n_items = max(max(train_data[:, 1]), max(eval_data[:, 1])) + 1
 
-        eval_data_label = eval_data.take([2], axis=1)
-        indix_click = np.where(eval_data_label == 1)
-        eval_data = eval_data.take(indix_click[0], axis=0)
+    #     eval_data_label = eval_data.take([2], axis=1)
+    #     indix_click = np.where(eval_data_label == 1)
+    #     eval_data = eval_data.take(indix_click[0], axis=0)
 
-        eval_data = eval_data.take([0, 1], axis=1)
-        train_data = train_data.take([0, 1], axis=1)
-        for u_id, i_id in train_data:
-            self.train_user_set[int(u_id)].append(int(i_id))
-        for u_id, i_id in eval_data:
-            self.test_user_set[int(u_id)].append(int(i_id))
+    #     eval_data = eval_data.take([0, 1], axis=1)
+    #     train_data = train_data.take([0, 1], axis=1)
+    #     for u_id, i_id in train_data:
+    #         self.train_user_set[int(u_id)].append(int(i_id))
+    #     for u_id, i_id in eval_data:
+    #         self.test_user_set[int(u_id)].append(int(i_id))
 
-    def load_data(self):
-        # directory = self.args.data_dir + self.args.data_name
-        train_cf, eval_cf, ui_adj = self.read_cf_new()
-        self.remap_item(train_cf, eval_cf)
+    # def load_data(self):
+    #     # directory = self.args.data_dir + self.args.data_name
+    #     train_cf, eval_cf, ui_adj = self.read_cf_new()
+    #     self.remap_item(train_cf, eval_cf)
 
-        return train_cf, eval_cf
+    #     return train_cf, eval_cf
 
     def statistic_cf(self):
         self.n_users = max(max(self.cf_train_data[0]), max(self.cf_test_data[0])) + 1
